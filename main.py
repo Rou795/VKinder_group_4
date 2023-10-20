@@ -1,13 +1,12 @@
 from random import randrange
-
+from config import token_group
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-token = input('Token: ')
 
-vk = vk_api.VkApi(token=token)
+token_api = token_group
+vk = vk_api.VkApi(token=token_api)
 longpoll = VkLongPoll(vk)
-
 
 def write_msg(user_id, message):
     vk.method('messages.send', {'user_id': user_id, 'message': message,  'random_id': randrange(10 ** 7),})
