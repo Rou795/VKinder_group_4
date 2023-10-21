@@ -4,10 +4,8 @@ from bs4 import BeautifulSoup
 class VkBot:
 
     def __init__(self, user_id):
-        print("Создан объект бота!")
         self.user_id = user_id
-
-        self._COMMANDS = ["ПРИВЕТ", "ПОГОДА", "ВРЕМЯ", "ПОКА"]
+        self.commands = ["peoples"]
 
     def get_user_info(self):
         first_name = u
