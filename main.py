@@ -3,7 +3,6 @@ from config import token_group, token_user
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-
 from functionsvk import *
 
 
@@ -77,7 +76,6 @@ def main():
                     break
                 else:
                     write_msg(user_id, "Не поняла вашего ответа...", None)
-
 
 if __name__ == '__main__':
     main()
