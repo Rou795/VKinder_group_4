@@ -15,10 +15,6 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
-class Base(DeclarativeBase):
-    pass
-
-
 class User(Base):
     __tablename__ = 'user'
 
@@ -87,7 +83,6 @@ def fill_user_table(user_data: dict) -> None:
         session.add(user)
         session.commit()
 
-
 def fill_found_user_table(users_founded: list, user_main: int) -> None:
     today = datetime.datetime.today()
     for user in users_founded:
@@ -109,13 +104,11 @@ def fill_found_user_table(users_founded: list, user_main: int) -> None:
             session.add(user_data)
     session.commit()
 
-
 def fill_status_field(user_id: int, status: int) -> None:
     user_found = session.query(FoundUser).get(user_id)
     user_found.status = status
     session.add(user_found)
     session.commit()
-
 
 def create_tables(engine):
     Base.metadata.drop_all(bind=engine)

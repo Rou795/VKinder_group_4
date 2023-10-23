@@ -5,7 +5,7 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from db_files.models import fill_found_user_table, fill_user_table
 from datetime import datetime
-#from config import token_group, token_user
+from config import token_group, token_user
 
 requested_fields = ['first_name', 'last_name', 'bdate', 'sex', 'city', 'domain']
 required_info = requested_fields.copy()
@@ -13,9 +13,6 @@ required_info.extend(['domain', 'age', 'id', 'is_closed'])
 
 # Ссылки на токены
 # токен группы
-token_group = 'vk1.a.ggLarpWkBcLDihQVCdatjKi3UcI6PAJlg55_63gWFTa3ICL5eOdxXhTYK4TZDAG-QUx2GbjaFNoH5H4Z9YlWlxNqcLGOizmhWLtCGna-07mpIbKOZXi1VJ70c1beJqrJOrZuynItxD9cj6LPSykg-FrbzEfzua7bIHiFuF2aOokAnBJBvUTMq-D0MGxStIFJjJ6O0O3hQ7QR8jL1HXAPSQ'
-token_user = 'vk1.a.rGVB58pIqVdqgHse3aKuzRSiBSQ6oPbGQx1F4F05KE6smrEH0SGoWfsKxm4mIgJood4OfxF5zDdVAC7P2znufYdimMJpWdotOPQ6yBgtE_Oc7Vly1k3_JHoaeODoOsCfzQ3lW2wSeA8v14yiOvhnIeD9OLZYuTaKpZT-17fujVjflxOZE8Ew_bq86p0R_3m7'
-
 vk = vk_api.VkApi(token=token_group)
 # токен пользователя
 vk2 = vk_api.VkApi(token=token_user)
@@ -29,7 +26,6 @@ def write_msg(user_id, message, attachment):
     vk.method('messages.send',
               {'user_id': user_id, 'message': message, 'attachment': attachment,  'random_id': randrange(10 ** 7)})
 
-
 def get_user_data(user_id):
     """
     gets user data by id and returns a dictionary
@@ -37,7 +33,6 @@ def get_user_data(user_id):
     пользователю в случае ошибки.
     """
     user_data = {}
-
     response = vk.method('users.get', {'user_id': user_id,
                                    'v': 5.154,
                                    'fields': ','.join(requested_fields)})
@@ -49,7 +44,6 @@ def get_user_data(user_id):
                     user_data[key] = datetime.strptime(value, '%d.%m.%Y').date()
                 else:
                     user_data[key] = value
-
         today = datetime.today()
         user_data['age'] = today.year - user_data['bdate'].year
     else:
@@ -74,10 +68,6 @@ def check_missing_info(user_data):
         return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
-
-
-"""Checking user birthday date and filling it with user input date."""
-
 
 def check_bdate(user_data, user_id):
     """
