@@ -1,11 +1,18 @@
+import datetime
+
 import sqlalchemy as sa
 import sqlalchemy.orm as so
+from sqlalchemy.dialects.postgresql import psycopg2
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from config import DSN, echo
+from db_files.config import DSN, echo
+from sqlalchemy.orm import sessionmaker
 
 engine = sa.create_engine(url=DSN, echo=echo)
+vk_url_base = 'https://vk.com/'
+Session = sessionmaker(bind=engine)
+session = Session()
 
 
 class Base(DeclarativeBase):
@@ -41,6 +48,46 @@ class FoundUser(Base):
 
     found_user_user: so.Mapped["User"] = relationship(back_populates='user_found_user')
 
+
+def fill_user_table(user_data: dict) -> None:
+    today = datetime.datetime.today()
+    age = today.year - user_data['bdate'].year
+
+    data = session.query(User).get(user_data['id'])
+    if data is None:
+        user = User(user_id=user_data['id'], user_name=user_data['first_name'],
+                user_surname=user_data['last_name'], gender=user_data['sex'],
+                city=user_data['city']['title'], link=vk_url_base + user_data['domain'],
+                user_age=age)
+
+        session.add(user)
+        session.commit()
+
+
+def fill_found_user_table(users_founded: list, user_main: int) -> None:
+    today = datetime.datetime.today()
+    for user in users_founded:
+        age = today.year - user['bdate'].year
+        data = session.query(FoundUser).get(user['id'])
+        if data is None:
+            try:
+                user_data = FoundUser(fnd_user_id=user['id'], user_name=user['first_name'], user_surname=user['last_name'],
+                              gender=user['sex'], city=user.get('city')['title'],
+                              link=vk_url_base + user['domain'], user_age=age,
+                              user_id=user_main)
+            except TypeError as ex:
+                user_data = FoundUser(fnd_user_id=user['id'], user_name=user['first_name'], user_surname=user['last_name'],
+                                  gender=user['sex'], city='UKWN',
+                                  link=vk_url_base + user['domain'], user_age=age,
+                                  user_id=user_main)
+            session.add(user_data)
+    session.commit()
+
+def fill_status_field(user_id: int, status: int) -> None:
+    user_found = session.query(FoundUser).get(user_id)
+    user_found.status = status
+    session.add(user_found)
+    session.commit()
 
 def create_tables(engine):
     # Base.metadata.drop_all(bind=engine)

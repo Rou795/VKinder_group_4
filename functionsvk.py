@@ -3,11 +3,19 @@ from random import randrange
 import datetime
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-from config import token_group, token_user
+from db_files.models import fill_found_user_table, fill_user_table
+from datetime import datetime
+#from config import token_group, token_user
 
+requested_fields = ['first_name', 'last_name', 'bdate', 'sex', 'city', 'domain']
+required_info = requested_fields.copy()
+required_info.extend(['domain', 'age', 'id', 'is_closed'])
 
 # Ссылки на токены
 # токен группы
+token_group = 'vk1.a.ggLarpWkBcLDihQVCdatjKi3UcI6PAJlg55_63gWFTa3ICL5eOdxXhTYK4TZDAG-QUx2GbjaFNoH5H4Z9YlWlxNqcLGOizmhWLtCGna-07mpIbKOZXi1VJ70c1beJqrJOrZuynItxD9cj6LPSykg-FrbzEfzua7bIHiFuF2aOokAnBJBvUTMq-D0MGxStIFJjJ6O0O3hQ7QR8jL1HXAPSQ'
+token_user = 'vk1.a.rGVB58pIqVdqgHse3aKuzRSiBSQ6oPbGQx1F4F05KE6smrEH0SGoWfsKxm4mIgJood4OfxF5zDdVAC7P2znufYdimMJpWdotOPQ6yBgtE_Oc7Vly1k3_JHoaeODoOsCfzQ3lW2wSeA8v14yiOvhnIeD9OLZYuTaKpZT-17fujVjflxOZE8Ew_bq86p0R_3m7'
+
 vk = vk_api.VkApi(token=token_group)
 # токен пользователя
 vk2 = vk_api.VkApi(token=token_user)
@@ -21,6 +29,7 @@ def write_msg(user_id, message, attachment):
     vk.method('messages.send',
               {'user_id': user_id, 'message': message, 'attachment': attachment,  'random_id': randrange(10 ** 7)})
 
+
 def get_user_data(user_id):
     """
     gets user data by id and returns a dictionary
@@ -28,19 +37,25 @@ def get_user_data(user_id):
     пользователю в случае ошибки.
     """
     user_data = {}
-    resp = vk.method('users.get', {'user_id': user_id,
-                                   'v': 5.131,
-                                   'fields': 'first name, last name, bdate, sex, city'})
-    if resp:
-        for key, value in resp[0].items():
-            if key == 'city':
-                user_data[key] = value['id']
-            else:
-                user_data[key] = value
+
+    response = vk.method('users.get', {'user_id': user_id,
+                                   'v': 5.154,
+                                   'fields': ','.join(requested_fields)})
+    if response:
+        user_data = {}
+        for key, value in response[0].items():
+            if key in required_info:
+                if key == 'bdate':
+                    user_data[key] = datetime.strptime(value, '%d.%m.%Y').date()
+                else:
+                    user_data[key] = value
+
+        today = datetime.today()
+        user_data['age'] = today.year - user_data['bdate'].year
     else:
         write_msg(user_id, 'Ошибка', None)
         return False
-    
+    fill_user_table(user_data)
     return user_data
 
 def check_missing_info(user_data):
@@ -54,7 +69,7 @@ def check_missing_info(user_data):
             if not user_data.get(item):
                 user_data[item] = ''
         if user_data.get('bdate'):
-            if len(user_data['bdate'].split('.')) != 3:
+            if user_data['bdate'].year == 1900:
                 user_data[item] = ''
         return user_data
     write_msg(user_data['id'], 'Ошибка', None)
@@ -71,11 +86,11 @@ def check_bdate(user_data, user_id):
     """
     if user_data:
         for item_dict in [user_data]:
-            if len(item_dict['bdate'].split('.')) != 3:
+            if item_dict['bdate'].year == 1900:
                 write_msg(user_id, f'Введите дату рождения в формате "ХХ.ХХ.ХХХХ:"', None)
                 for event in longpoll.listen():
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                        user_data['bdate'] = event.text
+                        user_data['bdate'] = datetime.strptime(event.text, '%d.%m.%Y')
                         return user_data
             else:           
                 return user_data
@@ -94,7 +109,7 @@ def city_id(city_name):
                     'q': f'{city_name}',
                     'need_all': 0,
                     'count': 1000,
-                    'v': 5.131})
+                    'v': 5.154})
     if resp:
         if resp.get('items'):
             return resp.get('items')
@@ -128,7 +143,7 @@ def get_age(user_data):
     """
     if user_data:
         for key, value in user_data:
-            user_data['age'] = datetime.datetime.now().year - int(user_data['bdate'][-4:])
+            user_data['age'] = datetime.today().year - user_data['bdate'].year
             return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
@@ -139,25 +154,44 @@ def user_search(user_data):
     Ищет пару по параметрам
     """
     resp = vk2.method('users.search', {
-                                'age_from': user_data['age'] - 3,
-                                'age_to': user_data['age'] + 3,
-                                'city': user_data['city'],
-                                'sex': 3 - user_data['sex'],
-                                'relation': 6,
-                                'status': 1,
-                                'has_photo': 1,
-                                'count': 1000,
-                                'v': 5.131})
+        'fields': ','.join(requested_fields),
+        'age_from': user_data['age'] - 3,
+        'age_to': user_data['age'] + 3,
+        'city': user_data['city']['id'],
+        'sex': 3 - user_data['sex'],
+        'relation': 6,
+        'has_photo': 1,
+        'count': 400,
+        'v': 5.154})
     if resp:
-        if resp.get('items'):
-            return resp.get('items')
+        count = resp['count']
+        users = resp['items']
+        users_data = []
+        for user in users:
+            user_template = {}
+            for key, value in user.items():
+                if key in required_info:
+                    if key == 'bdate':
+                        if value.count('.') == 2:
+                            user_template[key] = datetime.strptime(value, '%d.%m.%Y').date()
+                        elif value.count('.') == 1:
+                            user_template[key] = datetime.strptime(value, '%d.%m').date()
+                        else:
+                            user_template[key] = value
+                    else:
+                        user_template[key] = value
+            users_data.append(user_template.copy())
+            user_template.clear()
+    else:
         write_msg(user_data['id'], 'Ошибка', None)
         return False
+    fill_found_user_table(users_data, user_data['id'])
+    return users_data
 
 def get_users_list(users_data, user_id):
     """
     Filters open user accounts
-    Фильтрует открытые акаунты пользователей
+    Фильтрует открытые аккаунты пользователей
     """
     not_private_list = []
     if users_data:
@@ -200,7 +234,7 @@ def combine_users_data(user_id):
 def get_random_user(users_data, user_id):
     """
     Getting random account from dictionary
-    получяет случайную учетную запись из словаря
+    получает случайную учетную запись из словаря
     """
     if users_data:
         return random.choice(users_data)
@@ -215,8 +249,8 @@ def get_photo(vk_id):
     resp = vk2.method('photos.get', {'owner_id': vk_id,
             'album_id': 'profile',
             'extended': 1,
-            'count': 100,  # установливаем нужное количество фото для загрузки
-            'v': 5.131,
+#            'count': 100,  # установливаем нужное количество фото для загрузки
+            'v': 5.154,
             })
    
     if resp:
@@ -273,6 +307,5 @@ def loop_bot():
             if this_event.to_me:
                 message_text = this_event.text
                 return message_text
-            
 
            

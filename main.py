@@ -2,7 +2,7 @@ from random import randrange
 from config import token_group, token_user
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-
+from db_files.models import fill_status_field
 from functionsvk import *
 
 
@@ -41,25 +41,26 @@ def main():
                     # если id из списка random_choice не входит в список list_chosen
                     if random_choice[0]['id'] not in list_chosen:
                         # выводим сообщение пользователю результата поиска
-                        write_msg(user_id, {random_choice[0]['first_name']+' '+random_choice[0]['last_name']}, None)
+                        write_msg(user_id, {random_choice[0]['first_name'] + ' ' + random_choice[0]['last_name']}, None)
                         write_msg(user_id, f"Ссылка на профиль:{random_choice[0]['vk_link']}", None)
-                        write_msg(user_id, None, f"{','.join(get_photos_list(sort_by_likes(get_photo(random_choice[0]['id']))))}"
-                                  f"{random_choice[0]['id']}{','.join(photos_id(sort_by_likes(get_photo(random_choice[0]['id']))))}")                       
+                        photos_list = get_photos_list(sort_by_likes(get_photo(random_choice[0]['id'])))
+                        write_msg(user_id, None, f"{','.join(photos_list)}")
                         write_msg(user_id, f"Занести пользователя в список избранных? да/нет", None)
                         # объявляем функцию сообщений
                         message_text = loop_bot()
+                        status = 0
                         if message_text == 'да':
                             write_msg(user_id, f"Кандидат занесен в список избранных", None)
                             # добавляем кандидата в таблицу white_list
-                            #fill_white_list(random_choice)
+                            status = 1
                             # добавляем кандидата в список избранных
                             list_chosen.append(random_choice[0]['id'])
                         elif message_text == 'нет':
                             write_msg(user_id, f"Кандидат занесен в черный список", None)
                             # добавляем кандидата в таблицу black_list
-                            #fill_black_list(random_choice)
                             # добавляем кандидата в список избранных
                             list_chosen.append(random_choice[0]['id'])
+                        fill_status_field(random_choice[0]['id'], status)
                         write_msg(user_id,
                                   f"Продолжить поиск? (да/нет)\n"
                                   f"Либо введите 'показать избранных' для вывода списка избранных."
