@@ -1,6 +1,7 @@
+import os
 import psycopg2
 
-from db_files.config import DB_NAME, password, user
+from config import DB_NAME, password, user
 
 
 def create_db() -> None:

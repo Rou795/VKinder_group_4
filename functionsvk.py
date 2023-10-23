@@ -1,30 +1,31 @@
-import random
-from random import randrange
 import datetime
-import vk_api
-from vk_api.longpoll import VkLongPoll, VkEventType
-from db_files.models import fill_found_user_table, fill_user_table
+import random
 from datetime import datetime
-from config import token_group, token_user
+from random import randrange
 
-requested_fields = ['first_name', 'last_name', 'bdate', 'sex', 'city', 'domain']
+from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+#from models import fill_found_user_table, fill_user_table
+from config import token_group, token_user, vk, vk2, longpoll, requested_fields
+ 
+
 required_info = requested_fields.copy()
 required_info.extend(['domain', 'age', 'id', 'is_closed'])
 
-# Ссылки на токены
-# токен группы
-vk = vk_api.VkApi(token=token_group)
-# токен пользователя
-vk2 = vk_api.VkApi(token=token_user)
-longpoll = VkLongPoll(vk)
-
-def write_msg(user_id, message, attachment):
+def write_msg(user_id, message, attachment, keyboard=None):
     """
     Function for sending messages to user
     функция отправки сообщений пользователю
     """
-    vk.method('messages.send',
-              {'user_id': user_id, 'message': message, 'attachment': attachment,  'random_id': randrange(10 ** 7)})
+    post = {'peer_id': user_id, 
+            'message': message, 
+            'attachment': attachment, 
+            'random_id': randrange(10 ** 7)}
+    if keyboard != None:
+        post['keyboard'] = keyboard.get_keyboard()
+    else:
+        post = post    
+    vk.method('messages.send', post)
 
 def get_user_data(user_id):
     """
@@ -49,7 +50,7 @@ def get_user_data(user_id):
     else:
         write_msg(user_id, 'Ошибка', None)
         return False
-    fill_user_table(user_data)
+    #fill_user_table(user_data)
     return user_data
 
 def check_missing_info(user_data):
@@ -147,7 +148,7 @@ def user_search(user_data):
         'fields': ','.join(requested_fields),
         'age_from': user_data['age'] - 3,
         'age_to': user_data['age'] + 3,
-        'city': user_data['city']['id'],
+        'city': user_data['city'],
         'sex': 3 - user_data['sex'],
         'relation': 6,
         'has_photo': 1,
@@ -173,9 +174,9 @@ def user_search(user_data):
             users_data.append(user_template.copy())
             user_template.clear()
     else:
-        write_msg(user_data['id'], 'Ошибка', None)
+        write_msg(user_id,'Ошибка', None)
         return False
-    fill_found_user_table(users_data, user_data['id'])
+    #fill_found_user_table(users_data, user_data['id'])
     return users_data
 
 def get_users_list(users_data, user_id):

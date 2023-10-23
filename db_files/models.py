@@ -1,18 +1,20 @@
+import os
 import datetime
 
 import sqlalchemy as sa
 import sqlalchemy.orm as so
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import psycopg2
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from db_files.config import DSN, echo
+from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import sessionmaker
+from config import DSN, echo, engine, vk_url_base, Session, session
 
-engine = sa.create_engine(url=DSN, echo=echo)
-vk_url_base = 'https://vk.com/'
-Session = sessionmaker(bind=engine)
-session = Session()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class User(Base):
