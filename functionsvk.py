@@ -5,7 +5,7 @@ from random import randrange
 
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-#from models import fill_found_user_table, fill_user_table
+from db_files.models import fill_found_user_table, fill_user_table
 from config import token_group, token_user, vk, vk2, longpoll, requested_fields
  
 
@@ -50,7 +50,7 @@ def get_user_data(user_id):
     else:
         write_msg(user_id, 'Ошибка', None)
         return False
-    #fill_user_table(user_data)
+    fill_user_table(user_data)
     return user_data
 
 def check_missing_info(user_data):
@@ -176,7 +176,7 @@ def user_search(user_data):
     else:
         write_msg(user_id,'Ошибка', None)
         return False
-    #fill_found_user_table(users_data, user_data['id'])
+    fill_found_user_table(users_data, user_data['id'])
     return users_data
 
 def get_users_list(users_data, user_id):
