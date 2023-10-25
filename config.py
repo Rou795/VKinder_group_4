@@ -1,16 +1,16 @@
 import os
 import vk_api
-import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from vk_api.longpoll import VkLongPoll
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker
+
 
 load_dotenv()
 # token group
 token_group = os.getenv('TOKENAPI')
 # token user
 token_user = os.getenv('TOKENUSER')
-
 # DB settings
 DB_NAME: str = 'vkinder'
 user: str = 'postgres'

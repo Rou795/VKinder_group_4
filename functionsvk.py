@@ -50,13 +50,13 @@ def get_user_data(user_id):
     else:
         write_msg(user_id, 'Ошибка', None)
         return False
-    fill_user_table(user_data)
+    
     return user_data
 
 def check_missing_info(user_data):
     """
     collect information about missing user data and create keys for missing data
-    собирате информацию о недостающих данных пользователя и создаёт ключи для недостающих данных,
+    собирает информацию о недостающих данных пользователя и создаёт ключи для недостающих данных,
     возвращает json с недостающими данными
     """
     if user_data:
@@ -103,6 +103,7 @@ def city_id(city_name):
                     'v': 5.154})
     if resp:
         if resp.get('items'):
+            
             return resp.get('items')
         write_msg(city_name, 'Ошибка ввода города', None)
         return False
@@ -124,7 +125,7 @@ def check_city(user_data, user_id):
                         return user_data
             else:
                 return user_data
-    write_msg(user_data['id'], 'Ошибка', None)
+    write_msg(user_id, 'Ошибка', None)
     return False
 
 def get_age(user_data):
@@ -135,6 +136,7 @@ def get_age(user_data):
     if user_data:
         for key, value in user_data:
             user_data['age'] = datetime.today().year - user_data['bdate'].year
+           
             return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
@@ -148,12 +150,13 @@ def user_search(user_data):
         'fields': ','.join(requested_fields),
         'age_from': user_data['age'] - 3,
         'age_to': user_data['age'] + 3,
-        'city': user_data['city'],
+        'city': user_data['city'],#['id'],
         'sex': 3 - user_data['sex'],
         'relation': 6,
         'has_photo': 1,
         'count': 400,
         'v': 5.154})
+    
     if resp:
         count = resp['count']
         users = resp['items']
@@ -175,7 +178,9 @@ def user_search(user_data):
             user_template.clear()
     else:
         write_msg(user_id,'Ошибка', None)
+        
         return False
+   
     fill_found_user_table(users_data, user_data['id'])
     return users_data
 
@@ -191,10 +196,11 @@ def get_users_list(users_data, user_id):
                 not_private_list.append(
                                 {'first_name': person_dict.get('first_name'), 'last_name': person_dict.get('last_name'),
                                  'id': person_dict.get('id'), 'vk_link':   'vk.com/id'+str(person_dict.get('id')),
-                                 'is_closed': person_dict.get('is_closed')
+                                 'is_closed': person_dict.get('is_closed'),'bdate': person_dict.get('bdate')
                                  })
             else:
                 continue
+            
         return not_private_list
     write_msg(user_id, 'Ошибка', None)
     return False
@@ -205,7 +211,8 @@ def combine_user_data(user_id):
     Объединяет пользовательские данные
     """
     user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-    if user_data:
+    if user_data: 
+           
         return user_data
     write_msg(user_id, 'Ошибка', None)
     return False
@@ -218,6 +225,7 @@ def combine_users_data(user_id):
     users_data = get_users_list(
         user_search(get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))), user_id)
     if users_data:
+        
         return users_data
     write_msg(user_id, 'Ошибка', None)
     return False
@@ -299,4 +307,4 @@ def loop_bot():
                 message_text = this_event.text
                 return message_text
 
-           
+    

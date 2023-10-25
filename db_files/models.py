@@ -10,7 +10,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import sessionmaker
-from config import DSN, echo, engine, vk_url_base, Session, session
+#from configdb import DSN, echo, engine, vk_url_base, Session, session
+from db_files.configdb import DSN, echo, engine, vk_url_base, Session, session
 
 
 class Base(DeclarativeBase):
@@ -43,6 +44,7 @@ class FoundUser(Base):
     city: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)
     link: so.Mapped[str] = so.mapped_column(sa.Text, unique=True, nullable=False)
     user_age: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False)
+    user_id: so.Mapped[int] = so.mapped_column(sa.Integer, ForeignKey('user.user_id'))
 
     found_user_user: so.Mapped["User"] = relationship(back_populates='user_found_user')
     found_user_black_list: so.Mapped["BlackList"] = relationship(back_populates='black_list_found_user')
@@ -73,14 +75,14 @@ class Favorite(Base):
 
 def fill_user_table(user_data: dict) -> None:
     today = datetime.datetime.today()
-    age = today.year - user_data['bdate'].year
-
-    data = session.query(User).get(user_data['id'])
+    users = user_data['id']
+    #age = today.year - user_data['bdate'].year 
+    data = session.query(User).get(users)
     if data is None:
         user = User(user_id=user_data['id'], user_name=user_data['first_name'],
                     user_surname=user_data['last_name'], gender=user_data['sex'],
-                    city=user_data['city']['title'], link=vk_url_base + user_data['domain'],
-                    user_age=age)
+                    city=user_data['city'], link=vk_url_base + user_data['domain'],
+                    user_age=user_data['age'])
 
         session.add(user)
         session.commit()
@@ -119,3 +121,4 @@ def create_tables(engine):
 
 if __name__ == '__main__':
     create_tables(engine)
+   
