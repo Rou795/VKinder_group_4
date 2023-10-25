@@ -71,6 +71,7 @@ class Favorite(Base):
 
     favorite_user: so.Mapped["User"] = relationship(back_populates='user_favorite')
     favorite_found_user: so.Mapped["FoundUser"] = relationship(back_populates='found_user_favorite')
+   
 
 
 def fill_user_table(user_data: dict) -> None:
@@ -107,6 +108,34 @@ def fill_found_user_table(users_founded: list, user_main: int) -> None:
                                       user_id=user_main)
             session.add(user_data)
     session.commit()
+
+# def fill_white_list(random_choice, user_id):
+#     for item in random_choice:
+#         data = session.query(Favorite).filter_by(usser_id=item['id']).scalar()
+#         if not data:
+#             user_data = Favorite(fnd_user_id=item['id'], first_name=item['first_name'], last_name=item['last_name'],
+#                                             vk_link=item['vk_link']
+#                                             )
+#         session.add(user_data)
+#     return session.commit()
+
+def fill_black_list(random_choice, user_id):
+    for item in random_choice:
+        data = session.query(BlackList).filter_by(user_id=item['id']).scalar()
+        if not data:
+            user_data = BlackList(fnd_user_id=item['id'], user_id=user_id)
+        session.add(user_data)
+    return session.commit()
+
+# def check_db_favorites(user_id):
+#     db_favorites = session.query(Favorite).order_by(Favorite.user_id).all()
+#     all_users = []
+#     if db_favorites:
+#         for item in db_favorites:
+#             all_users.append([item.user_id, 'id:'+str(item.id), item.first_name+' '+item.last_name, item.vk_link+' '])
+#         return all_users
+#     write_msg(user_id, 'Ошибка', None)
+#     return False
 
 def fill_status_field(user_id: int, status: int) -> None:
     user_found = session.query(FoundUser).get(user_id)

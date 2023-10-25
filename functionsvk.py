@@ -64,7 +64,7 @@ def check_missing_info(user_data):
             if not user_data.get(item):
                 user_data[item] = ''
         if user_data.get('bdate'):
-            if user_data['bdate'].year == 1900:
+            if user_data['bdate'].year == 1900: 
                 user_data[item] = ''
         return user_data
     write_msg(user_data['id'], 'Ошибка', None)
@@ -81,8 +81,12 @@ def check_bdate(user_data, user_id):
                 write_msg(user_id, f'Введите дату рождения в формате "ХХ.ХХ.ХХХХ:"', None)
                 for event in longpoll.listen():
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                        user_data['bdate'] = datetime.strptime(event.text, '%d.%m.%Y')
-                        return user_data
+                        try:
+                            user_data['bdate'] = datetime.strptime(event.text, '%d.%m.%Y')
+                            return user_data                        
+                        except ValueError:
+                            write_msg(user_data['id'], 'Неправельно введенная дата', None)    
+                            
             else:           
                 return user_data
     write_msg(user_data['id'], 'Ошибка', None)
@@ -150,7 +154,7 @@ def user_search(user_data):
         'fields': ','.join(requested_fields),
         'age_from': user_data['age'] - 3,
         'age_to': user_data['age'] + 3,
-        'city': user_data['city'],#['id'],
+        'city': user_data['city'],
         'sex': 3 - user_data['sex'],
         'relation': 6,
         'has_photo': 1,
@@ -180,8 +184,7 @@ def user_search(user_data):
         write_msg(user_id,'Ошибка', None)
         
         return False
-   
-    fill_found_user_table(users_data, user_data['id'])
+
     return users_data
 
 def get_users_list(users_data, user_id):
@@ -193,11 +196,15 @@ def get_users_list(users_data, user_id):
     if users_data:
         for person_dict in users_data:
             if person_dict.get('is_closed') == False:
-                not_private_list.append(
-                                {'first_name': person_dict.get('first_name'), 'last_name': person_dict.get('last_name'),
-                                 'id': person_dict.get('id'), 'vk_link':   'vk.com/id'+str(person_dict.get('id')),
-                                 'is_closed': person_dict.get('is_closed'),'bdate': person_dict.get('bdate')
-                                 })
+                if person_dict.get('bdate') != None and person_dict.get('city') != None:
+                    not_private_list.append(
+                                    {'first_name': person_dict.get('first_name'), 'last_name': person_dict.get('last_name'),
+                                    'id': person_dict.get('id'), 'vk_link':   'vk.com/id'+str(person_dict.get('id')),
+                                    'is_closed': person_dict.get('is_closed'),'bdate': person_dict.get('bdate'), 
+                                    'sex': person_dict.get('sex'), 'domain': person_dict.get('domain'), 'city': person_dict.get('city')
+                                    })
+                else:
+                    continue    
             else:
                 continue
             

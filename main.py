@@ -2,7 +2,7 @@ from random import randrange
 
 from vk_api.longpoll import VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from db_files.models import fill_status_field, fill_user_table
+from db_files.models import fill_status_field, fill_user_table, fill_black_list,  fill_found_user_table
 from functionsvk import write_msg, get_user_data, get_age, get_users_list 
 from functionsvk import get_random_user, get_photo, get_photos_list
 from functionsvk import check_missing_info, check_city, check_bdate 
@@ -31,10 +31,12 @@ def main():
                 elif request in search_rules:                                      
                     random_choice = [] 
                     # передаем данные в таблицу user
+                    #fill_user_table(combine_user_data(user_id))                
                     fill_user_table(check_missing_info(get_user_data(user_id)))      
                     # передаем в функцию которая получяет случайную учетную запись из словаря, функцию которая объединяет данные поиска пользователей
                     random_user = get_random_user(combine_users_data(user_id), user_id)
-                    random_choice.append(random_user)                                                       
+                    random_choice.append(random_user)
+                    fill_found_user_table([random_user], user_id)                                                       
                     # если id из списка random_choice не входит в список list_chosen                   
                     if random_choice[0]['id'] not in list_chosen:                                              
                         # выводим сообщение пользователю результата поиска
@@ -55,13 +57,13 @@ def main():
                         if message_text == 'да':        
                             write_msg(user_id, f"Пользователь занесен в список избранных", None) 
                             # добавляем кандидата в таблицу white_list
-                            # нужно реализовать функцию которая добавляет кандидата в таблицу white_list
+                            #fill_white_list(random_choice, user_id)
                             # добавляем кандидата в список избранных
                             list_chosen.append(random_choice[0]['id'])                                    
                         elif message_text == 'нет':                           
                             write_msg(user_id, f"Кандидат занесен в черный список", None)
                             # добавляем кандидата в таблицу black_list
-                            # нужно реализовать функцию которая добавляет кандидата в таблицу white_list
+                            fill_black_list(random_choice, user_id)
                             list_chosen.append(random_choice[0]['id'])
                         keyboard = VkKeyboard(one_time=True)
                         keyboard.add_button('да', color=VkKeyboardColor.POSITIVE)
