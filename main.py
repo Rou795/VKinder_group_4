@@ -41,14 +41,14 @@ def main():
                         write_msg(user_id, {random_choice[0]['first_name'] + ' ' + random_choice[0]['last_name']}, None)
                         write_msg(user_id, f"Ссылка на профиль:{random_choice[0]['vk_link']}", None)
                         photos_list = get_photos_list(sort_by_likes(get_photo(random_choice[0]['id'])))
-                        id_photos = f"{random_choice[0]['id']}{','.join(photos_id(sort_by_likes(get_photo(random_choice[0]['id']))))}"                        
+                        id_photos = f"{random_choice[0]['id']},{','.join(photos_id(sort_by_likes(get_photo(random_choice[0]['id']))))}"                       
                         if photos_list != None:
-                            write_msg(user_id, None, f"{','.join(photos_list)}{id_photos}")
+                            write_msg(user_id, None, f"{','.join(photos_list)},{id_photos}")
                         else:
                             write_msg(user_id, f"У пользователя нет фотографий(", None)  
                         keyboard = VkKeyboard(one_time=True)
                         keyboard.add_button('да', color=VkKeyboardColor.POSITIVE)
-                        keyboard.add_button('нет', color=VkKeyboardColor.NEGATIVE)      
+                        keyboard.add_button('нет', color=VkKeyboardColor.NEGATIVE)     
                         write_msg(user_id, f"Занести пользователя в список избранных?", None, keyboard)                      
                         # объявляем функцию сообщений
                         message_text = loop_bot()          
@@ -59,16 +59,16 @@ def main():
                             # добавляем кандидата в список избранных
                             list_chosen.append(random_choice[0]['id'])                                       
                         elif message_text == 'нет':                          
-                            write_msg(user_id, f"Кандидат занесен в черный список", None)
+                            #write_msg(user_id, f"Кандидат занесен в черный список", None)
                              # добавляем кандидата в таблицу black_list
                             fill_black_list(random_choice, user_id)
-                            list_chosen.append(random_choice[0]['id'])        
+                            list_chosen.append(random_choice[0]['id'])               
                         keyboard = VkKeyboard(one_time=True)
                         keyboard.add_button('да', color=VkKeyboardColor.POSITIVE)
                         keyboard.add_button('нет', color=VkKeyboardColor.NEGATIVE)
                         keyboard.add_line()
                         keyboard.add_button('Показать избранных', color=VkKeyboardColor.POSITIVE)      
-                        write_msg(user_id, f"Продолжить поиск?)\n", None, keyboard)
+                        write_msg(user_id, f"Продолжить поиск?)\n", None, keyboard)                        
                     else:
                         continue
                         

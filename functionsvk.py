@@ -102,7 +102,7 @@ def check_city(user_data, user_id):
     """
     if user_data:
         for item_dict in [user_data]:
-            if item_dict['city'] == '':
+            if item_dict['city'] == None:
                 write_msg(user_id, f'Введите город:', None)
                 for event in longpoll.listen():
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
