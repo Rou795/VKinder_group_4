@@ -8,8 +8,6 @@ from db_files.functionsdb import (fill_user_table, fill_black_list, fill_found_u
                                   fill_favorite, check_db_favorites, check_user, take_from_bd, show_status_maker)
 
 
-
-
 def search_talk(random_user: dict, user_id: str) -> None:
     showed_peoples = []
     message = (f"{random_user['first_name'] + ' ' + random_user['last_name']}\n"
