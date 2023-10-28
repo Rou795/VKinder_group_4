@@ -133,10 +133,8 @@ def get_age(user_data):
     считает возраста пользователей
     """
     if user_data:
-        for key, value in user_data:
-            user_data['age'] = datetime.today().year - user_data['bdate'].year
-
-            return user_data
+        user_data['age'] = datetime.today().year - user_data['bdate'].year
+        return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
 
@@ -146,7 +144,12 @@ def user_search(user_data):
     Searching for pair, accordind to parameters
     Ищет пару по параметрам
     """
-    resp = vk2.method('users.search', {
+    resp = []
+# эксперементально
+
+    b_date = [el for el in range(1, 32)]
+    for birth_day in range(1, 32):
+        resp.extend(vk2.method('users.search', {
         'fields': ','.join(requested_fields),
         'age_from': user_data['age'] - 3,
         'age_to': user_data['age'] + 3,
@@ -155,14 +158,20 @@ def user_search(user_data):
         'relation': 6,
         'has_photo': 1,
         'count': 400,
-        'v': 5.154})
+        'birth_day': birth_day,
+        'v': 5.154})['items'])
 
     if resp:
-        count = resp['count']
-        users = resp['items']
+        users = resp
+        print(len(resp))
         users_data = []
         for user in users:
             user_template = {}
+            if user.get('city') is None:
+                continue
+            else:
+                if user.get('city').get('id') != user_data.get('city').get('id'):
+                    continue
             for key, value in user.items():
                 if key in required_info:
                     if key == 'bdate':
@@ -177,10 +186,8 @@ def user_search(user_data):
             users_data.append(user_template.copy())
             user_template.clear()
     else:
-        write_msg(user_id, 'Ошибка', None)
-
+        write_msg(user_data['id'], 'Ошибка', None)
         return False
-
     return users_data
 
 
@@ -212,30 +219,34 @@ def get_users_list(users_data, user_id):
     return False
 
 
-def combine_user_data(user_id):
+def combine_user_data(user_id, bd_founders=None) -> list:
     """
     Combining user data
     Объединяет пользовательские данные
     """
-    user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-    if user_data:
+    if bd_founders:
+        user_data = bd_founders
         return user_data
-    write_msg(user_id, 'Ошибка', None)
-    return False
+    else:
+        user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
+        if user_data:
+            return user_data
+        write_msg(user_id, 'Ошибка', None)
 
 
-def combine_users_data(user_id):
+def combine_users_data(user_id, bd_founders=None):
     """
     Combining users search data
     объединяет данные поиска пользователей
     """
-    users_data = get_users_list(
-        user_search(get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))),
-        user_id)
-    if users_data:
-        return users_data
-    write_msg(user_id, 'Ошибка', None)
-    return False
+    if bd_founders:
+        user_data = bd_founders
+        return user_data
+    else:
+        user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
+        if user_data:
+            return user_data
+        write_msg(user_id, 'Ошибка', None)
 
 
 def get_random_user(users_data, user_id):
@@ -252,7 +263,7 @@ def get_random_user(users_data, user_id):
 def get_photo(vk_id):
     """
     Getting photos from vk
-    Получяет фотографии из ВК
+    Получает фотографии из ВК
     """
     resp = vk2.method('photos.get', {'owner_id': vk_id,
                                      'album_id': 'profile',
@@ -268,17 +279,14 @@ def get_photo(vk_id):
         return False
 
 
-def sort_by_likes(photos_dict):
+def sort_by_likes(photos: list) -> list:
     """
     Sorting photos by number of likes
     Сортирует фотографии по количеству лайков и возвращаем первые 3 фотографии с максимальным количеством лайков
     """
     photos_by_likes_list = []
 
-    for photos in photos_dict:
-        likes = photos.get('likes')
-        photos_by_likes_list.append([photos.get('owner_id'), photos.get('id'), likes.get('count')])
-    photos_by_likes_list = sorted(photos_by_likes_list, key=lambda x: x[2], reverse=True)
+    photos_by_likes_list = sorted(photos, key=lambda x: x.get('likes').get('count'), reverse=True)
     return photos_by_likes_list[0:3]
 
 
@@ -290,10 +298,8 @@ def get_photos_list(sort_list):
     photos_list = []
     count = 0
     for photos in sort_list:
-        photos_list.append('photo' + str(photos[0]) + '_' + str(photos[1]))
-        count += 1
-        if count == 3:
-            return photos_list
+        photos_list.append('photo' + str(photos.get('owner_id')) + '_' + str(photos.get('id')))
+    return photos_list
 
 
 def photos_id(photo_id):
@@ -303,7 +309,7 @@ def photos_id(photo_id):
     """
     list_id = []
     for photo in photo_id:
-        list_id.append(str(photo[1]))
+        list_id.append(str(photo.get('id')))
 
     return list_id
 
