@@ -148,6 +148,7 @@ def user_search(user_data):
 # эксперементально
 
     b_date = [el for el in range(1, 32)]
+    b_month = [el for el in range(1, 13)]
     for birth_day in range(1, 32):
         resp.extend(vk2.method('users.search', {
         'fields': ','.join(requested_fields),
@@ -219,22 +220,19 @@ def get_users_list(users_data, user_id):
     return False
 
 
-def combine_user_data(user_id, bd_founders=None) -> list:
+def combine_user_data(user_id) -> list:
     """
     Combining user data
     Объединяет пользовательские данные
     """
-    if bd_founders:
-        user_data = bd_founders
+
+    user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
+    if user_data:
         return user_data
-    else:
-        user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-        if user_data:
-            return user_data
-        write_msg(user_id, 'Ошибка', None)
+    write_msg(user_id, 'Ошибка', None)
 
 
-def combine_users_data(user_id, bd_founders=None):
+def combine_users_data(user_data, bd_founders=None):
     """
     Combining users search data
     объединяет данные поиска пользователей
@@ -243,10 +241,10 @@ def combine_users_data(user_id, bd_founders=None):
         user_data = bd_founders
         return user_data
     else:
-        user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-        if user_data:
-            return user_data
-        write_msg(user_id, 'Ошибка', None)
+        users_data = get_users_list(user_search(user_data), user_data['id'])
+        if users_data:
+            return users_data
+        write_msg(user_data['id'], 'Ошибка', None)
 
 
 def get_random_user(users_data, user_id):

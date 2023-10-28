@@ -16,6 +16,17 @@ def fill_user_table(user_data: dict) -> None:
     session.commit()
 
 
+def take_from_users(user_id: int) -> dict:
+    """
+    Функция для получения данных о пользователях из БД
+    """
+    user = session.query(User).get(user_id)
+    user_data = {'id': user_id, 'first_name': user.user_name,
+                 'last_name': user.user_surname, 'vk_link': user.link,
+                 'age': user.user_age}
+    return user_data
+
+
 def fill_found_user_table(users_founded: list, user_main: int) -> None:
     """
     Функция заполнения таблицы FoundUsers

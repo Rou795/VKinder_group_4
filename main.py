@@ -5,7 +5,8 @@ from functionsvk import (sort_by_likes, photos_id, loop_bot, get_photo, get_phot
 
 from rules import rules, search_rules, input_rules, removal_rules
 from db_files.functionsdb import (fill_user_table, fill_black_list, fill_found_user_table,
-                                  fill_favorite, check_db_favorites, check_user, take_from_bd, show_status_maker)
+                                  fill_favorite, check_db_favorites, check_user,
+                                  take_from_bd, show_status_maker, take_from_users)
 
 
 def search_talk(random_user: dict, user_id: str) -> None:
@@ -68,8 +69,10 @@ def main():
                     # информацию о нем в таблицу
                     check_new = check_user(int(user_id))
                     if check_new:
+                        user_data = check_missing_info(get_user_data(user_id))
                         fill_user_table(check_missing_info(get_user_data(user_id)))
                     else:
+                        user_data = take_from_users(int(user_id))
                         favorites = check_db_favorites(user_id)
                         if favorites:
                             list_chosen = [el[1][3:] for el in check_db_favorites(user_id)]
@@ -80,7 +83,7 @@ def main():
                         search_data = peoples_for_show
                     else:
                         bd_founders = take_from_bd(int(user_id))
-                        search_data = combine_users_data(user_id, bd_founders=bd_founders)
+                        search_data = combine_users_data(user_data, bd_founders=bd_founders)
                         if bd_founders:
                             pass
                         else:
