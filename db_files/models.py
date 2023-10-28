@@ -1,15 +1,12 @@
-import datetime
+
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import psycopg2
+
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import DeclarativeMeta
-from sqlalchemy.orm import sessionmaker
-#from configdb import DSN, echo, engine, vk_url_base, Session, session
-from db_files.configdb import DSN, echo, engine, vk_url_base, Session, session
+
+from db_files.configdb import engine
 
 
 class Base(DeclarativeBase):

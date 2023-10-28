@@ -3,29 +3,28 @@ import random
 from datetime import datetime
 from random import randrange
 from rules import requested_fields
-from vk_api.longpoll import VkLongPoll, VkEventType
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from db_files.functionsdb import fill_found_user_table, fill_user_table
-from config import token_group, token_user, vk, vk2, longpoll
- 
+from vk_api.longpoll import VkEventType
+from config import vk, vk2, longpoll
 
 required_info = requested_fields.copy()
 required_info.extend(['domain', 'age', 'id', 'is_closed'])
+
 
 def write_msg(user_id, message, attachment, keyboard=None):
     """
     Function for sending messages to user
     функция отправки сообщений пользователю
     """
-    post = {'peer_id': user_id, 
-            'message': message, 
-            'attachment': attachment, 
+    post = {'peer_id': user_id,
+            'message': message,
+            'attachment': attachment,
             'random_id': randrange(10 ** 7)}
-    if keyboard != None:
+    if keyboard is not None:
         post['keyboard'] = keyboard.get_keyboard()
     else:
-        post = post    
+        post = post
     vk.method('messages.send', post)
+
 
 def get_user_data(user_id):
     """
@@ -35,8 +34,8 @@ def get_user_data(user_id):
     """
     user_data = {}
     response = vk.method('users.get', {'user_id': user_id,
-                                   'v': 5.154,
-                                   'fields': ','.join(requested_fields)})
+                                       'v': 5.154,
+                                       'fields': ','.join(requested_fields)})
     if response:
         user_data = {}
         for key, value in response[0].items():
@@ -50,8 +49,9 @@ def get_user_data(user_id):
     else:
         write_msg(user_id, 'Ошибка', None)
         return False
-    
+
     return user_data
+
 
 def check_missing_info(user_data):
     """
@@ -64,11 +64,12 @@ def check_missing_info(user_data):
             if not user_data.get(item):
                 user_data[item] = ''
         if user_data.get('bdate'):
-            if user_data['bdate'].year == 1900: 
+            if user_data['bdate'].year == 1900:
                 user_data[item] = ''
         return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
+
 
 def check_bdate(user_data, user_id):
     """
@@ -83,15 +84,16 @@ def check_bdate(user_data, user_id):
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
                         try:
                             user_data['bdate'] = datetime.strptime(event.text, '%d.%m.%Y')
-                            return user_data                        
+                            return user_data
                         except ValueError:
-                            write_msg(user_data['id'], 'Неправельно введенная дата', None)    
-                            
-            else:           
+                            write_msg(user_data['id'], 'Неправельно введенная дата', None)
+
+            else:
                 return user_data
-            
-    write_msg(user_data['id'], 'Ошибка', None)   
+
+    write_msg(user_data['id'], 'Ошибка', None)
     return False
+
 
 def check_city(user_data, user_id):
     """
@@ -102,27 +104,28 @@ def check_city(user_data, user_id):
     """
     if user_data:
         for item_dict in [user_data]:
-            if item_dict['city'] == None:
+            if item_dict['city'] is None:
                 write_msg(user_id, f'Введите город:', None)
                 for event in longpoll.listen():
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
                         resp = vk2.method('database.getCities', {
-                                            'country_id': 1,
-                                            'q': f'{event.text}',
-                                            'need_all': 0,
-                                            'count': 1000,
-                                            'v': 5.154})
+                            'country_id': 1,
+                            'q': f'{event.text}',
+                            'need_all': 0,
+                            'count': 1000,
+                            'v': 5.154})
                         if resp:
                             if resp.get('items'):
                                 user_data['city'] = resp.get('items')[0]['id']
                                 return user_data
                             else:
                                 write_msg(user_id, 'Ошибка ввода города', None)
-                                write_msg(user_id, f'Введите город:', None)    
-            else:   
+                                write_msg(user_id, f'Введите город:', None)
+            else:
                 return user_data
     write_msg(user_id, 'Ошибка', None)
     return False
+
 
 def get_age(user_data):
     """
@@ -132,10 +135,11 @@ def get_age(user_data):
     if user_data:
         for key, value in user_data:
             user_data['age'] = datetime.today().year - user_data['bdate'].year
-           
+
             return user_data
     write_msg(user_data['id'], 'Ошибка', None)
     return False
+
 
 def user_search(user_data):
     """
@@ -146,13 +150,13 @@ def user_search(user_data):
         'fields': ','.join(requested_fields),
         'age_from': user_data['age'] - 3,
         'age_to': user_data['age'] + 3,
-        'city': user_data['city'],
+        'city': user_data.get('city').get('id'),
         'sex': 3 - user_data['sex'],
         'relation': 6,
         'has_photo': 1,
         'count': 400,
         'v': 5.154})
-    
+
     if resp:
         count = resp['count']
         users = resp['items']
@@ -173,11 +177,12 @@ def user_search(user_data):
             users_data.append(user_template.copy())
             user_template.clear()
     else:
-        write_msg(user_id,'Ошибка', None)
-        
+        write_msg(user_id, 'Ошибка', None)
+
         return False
 
     return users_data
+
 
 def get_users_list(users_data, user_id):
     """
@@ -187,22 +192,25 @@ def get_users_list(users_data, user_id):
     not_private_list = []
     if users_data:
         for person_dict in users_data:
-            if person_dict.get('is_closed') == False:
-                if person_dict.get('bdate') != None and person_dict.get('city') != None:
+            if person_dict.get('is_closed') is False:
+                if person_dict.get('bdate') is not None and person_dict.get('city') is not None:
                     not_private_list.append(
-                                    {'first_name': person_dict.get('first_name'), 'last_name': person_dict.get('last_name'),
-                                    'id': person_dict.get('id'), 'vk_link':   'vk.com/id'+str(person_dict.get('id')),
-                                    'is_closed': person_dict.get('is_closed'),'bdate': person_dict.get('bdate'), 'user_id': user_id,
-                                    'sex': person_dict.get('sex'), 'domain': person_dict.get('domain'), 'city': person_dict.get('city')
-                                    })
+                        {'first_name': person_dict.get('first_name'), 'last_name': person_dict.get('last_name'),
+                         'id': person_dict.get('id'), 'vk_link': 'vk.com/id' + str(person_dict.get('id')),
+                         'is_closed': person_dict.get('is_closed'), 'bdate': person_dict.get('bdate'),
+                         'user_id': user_id,
+                         'sex': person_dict.get('sex'), 'domain': person_dict.get('domain'),
+                         'city': person_dict.get('city')
+                         })
                 else:
-                    continue    
+                    continue
             else:
                 continue
-            
+
         return not_private_list
     write_msg(user_id, 'Ошибка', None)
     return False
+
 
 def combine_user_data(user_id):
     """
@@ -210,11 +218,11 @@ def combine_user_data(user_id):
     Объединяет пользовательские данные
     """
     user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-    if user_data: 
-           
+    if user_data:
         return user_data
     write_msg(user_id, 'Ошибка', None)
     return False
+
 
 def combine_users_data(user_id):
     """
@@ -222,12 +230,13 @@ def combine_users_data(user_id):
     объединяет данные поиска пользователей
     """
     users_data = get_users_list(
-        user_search(get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))), user_id)
+        user_search(get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))),
+        user_id)
     if users_data:
-        
         return users_data
     write_msg(user_id, 'Ошибка', None)
     return False
+
 
 def get_random_user(users_data, user_id):
     """
@@ -239,24 +248,25 @@ def get_random_user(users_data, user_id):
     write_msg(user_id, 'Ошибка', None)
     return False
 
+
 def get_photo(vk_id):
     """
     Getting photos from vk
     Получяет фотографии из ВК
     """
     resp = vk2.method('photos.get', {'owner_id': vk_id,
-            'album_id': 'profile',
-            'extended': 1,
-#            'count': 100,  # установливаем нужное количество фото для загрузки
-            'v': 5.154,
-            })
-   
+                                     'album_id': 'profile',
+                                     'extended': 1,
+                                     'count': 50,  # установливаем нужное количество фото для загрузки
+                                     'v': 5.154,
+                                     })
+
     if resp:
         if resp.get('items'):
             return resp.get('items')
         write_msg(vk_id, 'Ошибка', None)
         return False
-    
+
 
 def sort_by_likes(photos_dict):
     """
@@ -271,6 +281,7 @@ def sort_by_likes(photos_dict):
     photos_by_likes_list = sorted(photos_by_likes_list, key=lambda x: x[2], reverse=True)
     return photos_by_likes_list[0:3]
 
+
 def get_photos_list(sort_list):
     """
     we return the first 3 photos with the maximum number of likes
@@ -279,10 +290,11 @@ def get_photos_list(sort_list):
     photos_list = []
     count = 0
     for photos in sort_list:
-        photos_list.append('photo'+str(photos[0])+'_'+str(photos[1]))
+        photos_list.append('photo' + str(photos[0]) + '_' + str(photos[1]))
         count += 1
         if count == 3:
             return photos_list
+
 
 def photos_id(photo_id):
     """
@@ -292,8 +304,9 @@ def photos_id(photo_id):
     list_id = []
     for photo in photo_id:
         list_id.append(str(photo[1]))
-        
+
     return list_id
+
 
 def loop_bot():
     """
@@ -305,5 +318,3 @@ def loop_bot():
             if this_event.to_me:
                 message_text = this_event.text
                 return message_text
-
-    
