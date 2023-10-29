@@ -2,9 +2,9 @@ from vk_api.longpoll import VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from functionsvk import (sort_by_likes, photos_id, loop_bot, get_photo, get_photos_list,
                          check_missing_info, get_user_data, get_random_user, combine_users_data, write_msg, longpoll,
-                         get_city)
+                         get_city, check_city, check_bdate)
 
-from rules import rules, search_rules, input_rules, removal_rules
+from rules import rules, input_rules
 from db_files.functionsdb import (fill_user_table, fill_black_list, fill_found_user_table,
                                   fill_favorite, check_db_favorites, check_user,
                                   take_from_bd, show_status_maker, take_from_users, check_black_list)
@@ -26,6 +26,7 @@ def show_people(peoples_for_show: list, user_data: dict, user_id: str,
             fill_found_user_table(search_data, int(user_id))
         peoples_for_show = search_data
     random_user = get_random_user(search_data, user_id)
+
     # если id из списка random_choice не входит в список list_chosen и ban_list
     marker = check_ban_chosen(random_user, list_chosen, ban_list)
     if marker:
@@ -49,7 +50,6 @@ def show_people(peoples_for_show: list, user_data: dict, user_id: str,
 
         showed_peoples.append(random_user['id'])
         show_status_maker(int(user_id), showed_peoples)
-#        return peoples_for_show, random_user
         post_search_talk(random_user, user_id, peoples_for_show, user_data, list_chosen, ban_list)
 
 
@@ -57,7 +57,7 @@ def new_user(user_id: str) -> dict:
     """
     Функция для сбора информации о новом пользователе и записи её в БД
     """
-    user_data = check_missing_info(get_user_data(user_id))
+    user_data = check_missing_info(check_city(check_bdate(get_user_data(user_id), user_id), user_id))
     fill_user_table(user_data)
     return user_data
 
@@ -101,34 +101,29 @@ def post_search_talk(random_user: dict, user_id: str, peoples_for_show: list, us
     keyboard.add_line()
     keyboard.add_button('Закончить поиск', color=VkKeyboardColor.SECONDARY)
     write_msg(user_id, f"Как вам это человек?", None, keyboard)
+
     # объявляем функцию сообщений
     message_text = loop_bot()
     if message_text == 'В избранные':
         write_msg(user_id, f"Пользователь занесен в список избранных", None)
+
         # добавляем кандидата в таблицу Favorite
         fill_favorite(random_user, user_id)
         show_people(peoples_for_show, user_data, user_id, list_chosen, ban_list)
+
     # добавляем кандидата в список избранных
     elif message_text == 'В черный лист':
         write_msg(user_id, f"Кандидат занесен в черный список", None)
+
         # добавляем кандидата в таблицу black_list
         fill_black_list(random_user, int(user_id))
         show_people(peoples_for_show, user_data, user_id, list_chosen, ban_list)
     elif message_text == 'Продолжить поиск':
         show_people(peoples_for_show, user_data, user_id, list_chosen, ban_list)
+
     # ветка для окончания работы
     elif message_text == 'Закончить поиск':
         main_menu(user_id, peoples_for_show, list_chosen, ban_list)
-
-
-def search_blok(user_data: dict, list_chosen: list,
-                ban_list: list, peoples_for_show: list):
-    """
-    Функция, являющаяся центральным узлом для операций поиска
-    """
-    peoples_for_show, random_user = show_people(peoples_for_show, user_data, user_data['id'],
-                                                list_chosen, ban_list)
-    post_search_talk(random_user, user_data['id'], peoples_for_show, user_data, list_chosen, ban_list)
 
 
 def ban_show(user_id: str, peoples_for_show: list, list_chosen: list) -> None:
@@ -136,7 +131,6 @@ def ban_show(user_id: str, peoples_for_show: list, list_chosen: list) -> None:
     Функция для показа забаненных
     """
     keyboard = VkKeyboard()
-#    keyboard.add_button('да', color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Выйти в главное меню', color=VkKeyboardColor.NEGATIVE)
     write_msg(user_id, f"Список забаненных", None, keyboard)
     # выводим сообщение пользователю из таблицы favorites
@@ -158,7 +152,6 @@ def favorite_show(user_id: str, peoples_for_show: list, ban_list: list) -> None:
     Функция для показа избранных
     """
     keyboard = VkKeyboard()
-#    keyboard.add_button('да', color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Выйти в главное меню', color=VkKeyboardColor.NEGATIVE)
     # выводим сообщение пользователю из таблицы favorites
     list_chosen = check_db_favorites(user_id)
@@ -201,7 +194,6 @@ def main_menu(user_id, peoples_for_show: list, list_chosen: list, ban_list: list
             list_chosen = [el[1][3:] for el in list_chosen]
         if ban_list:
             ban_list = [el[1][3:] for el in ban_list]
-#        search_blok(user_data, list_chosen, ban_list, peoples_for_show)
         show_people(peoples_for_show, user_data, user_id, list_chosen, ban_list)
     elif message_text == 'Избранные':
         favorite_show(user_id, peoples_for_show, ban_list)

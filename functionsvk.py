@@ -231,18 +231,6 @@ def get_users_list(users_data, user_id):
     return False
 
 
-def combine_user_data(user_id) -> list:
-    """
-    Combining user data
-    Объединяет пользовательские данные
-    """
-
-    user_data = [get_age(check_city(check_bdate(check_missing_info(get_user_data(user_id)), user_id), user_id))]
-    if user_data:
-        return user_data
-    write_msg(user_id, 'Ошибка', None)
-
-
 def combine_users_data(user_data, bd_founders=None):
     """
     Combining users search data
