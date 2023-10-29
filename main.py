@@ -58,7 +58,7 @@ def new_user(user_id: str) -> dict:
     Функция для сбора информации о новом пользователе и записи её в БД
     """
     user_data = check_missing_info(get_user_data(user_id))
-    fill_user_table(check_missing_info(get_user_data(user_id)))
+    fill_user_table(user_data)
     return user_data
 
 
@@ -191,7 +191,7 @@ def main_menu(user_id, peoples_for_show: list, list_chosen: list, ban_list: list
     if message_text == 'Начать поиск':
         check_new = check_user(int(user_id))
         if check_new:
-            write_msg(user_id, 'Для новых пользователей первичный поиск модет занять около 2 минут.'
+            write_msg(user_id, 'Для новых пользователей первичный поиск может занять около 2 минут.'
                                ' Когда придёте в следующий раз, так долго ждать не заставлю'
                                , None)
             user_data = new_user(user_id)

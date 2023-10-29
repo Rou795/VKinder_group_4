@@ -61,9 +61,13 @@ def fill_favorite(random_choice: dict, user_id: str) -> None:
         for row in data:
             if row.fnd_user_id == random_choice['id']:
                 return None
-    data = Favorite(fnd_user_id=random_choice['id'], user_id=user_id, user_name=random_choice['first_name'],
-                    user_surname=random_choice['last_name'], link=random_choice['vk_link'])
-    session.add(data)
+        data = Favorite(fnd_user_id=random_choice['id'], user_id=user_id, user_name=random_choice['first_name'],
+                        user_surname=random_choice['last_name'], link=random_choice['vk_link'])
+        session.add(data)
+    else:
+        data = Favorite(fnd_user_id=random_choice['id'], user_id=user_id, user_name=random_choice['first_name'],
+                        user_surname=random_choice['last_name'], link=random_choice['vk_link'])
+        session.add(data)
     session.commit()
 
 
@@ -127,7 +131,7 @@ def fill_black_list(random_user: dict, user_id: int) -> None:
             if user.fnd_user_id == random_user:
                 return None
         user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id, user_name=random_user['first_name'],
-                              user_surname=random_user['last_name'], link=random_user['link'])
+                              user_surname=random_user['last_name'], link=random_user['vk_link'])
         session.add(user_data)
     else:
         user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id, user_name=random_user['first_name'],
