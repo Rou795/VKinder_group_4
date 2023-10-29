@@ -23,7 +23,7 @@ def take_from_users(user_id: int) -> dict:
     user = session.query(User).get(user_id)
     user_data = {'id': user_id, 'first_name': user.user_name,
                  'last_name': user.user_surname, 'vk_link': user.link,
-                 'age': user.user_age}
+                 'age': user.user_age, 'city': user.city, 'sex': user.gender}
     return user_data
 
 
@@ -62,9 +62,7 @@ def fill_favorite(random_choice: dict, user_id: str) -> None:
             if row.fnd_user_id == random_choice['id']:
                 return None
     data = Favorite(fnd_user_id=random_choice['id'], user_id=user_id, user_name=random_choice['first_name'],
-                    user_surname=random_choice['last_name'],
-                    link=random_choice['vk_link']
-                    )
+                    user_surname=random_choice['last_name'], link=random_choice['vk_link'])
     session.add(data)
     session.commit()
 
@@ -128,10 +126,12 @@ def fill_black_list(random_user: dict, user_id: int) -> None:
         for user in user_black_list:
             if user.fnd_user_id == random_user:
                 return None
-        user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id)
+        user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id, user_name=random_user['first_name'],
+                              user_surname=random_user['last_name'], link=random_user['link'])
         session.add(user_data)
     else:
-        user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id)
+        user_data = BlackList(fnd_user_id=random_user['id'], user_id=user_id, user_name=random_user['first_name'],
+                              user_surname=random_user['last_name'], link=random_user['vk_link'])
         session.add(user_data)
     session.commit()
 
@@ -144,9 +144,22 @@ def check_db_favorites(user_id: str) -> list:
     all_users = []
     if db_favorites:
         for item in db_favorites:
-            all_users.append((item.fnd_user_id, 'id:' + str(item.fnd_user_id), item.user_name + ' ' + item.user_surname,
-                              item.link + ' '))
+            all_users.append((item.fnd_user_id, 'id:' + str(item.fnd_user_id),
+                              item.user_name + ' ' + item.user_surname, item.link + ' '))
         return all_users
+
+
+def check_black_list(user_id: str) -> list:
+    """
+    Функция для выгрузки списка заблокированных из базы
+    """
+    bd_black = session.query(BlackList).filter(BlackList.user_id == user_id).all()
+    black_users = []
+    if bd_black:
+        for item in bd_black:
+            black_users.append((item.fnd_user_id, 'id:' + str(item.fnd_user_id),
+                                item.user_name + ' ' + item.user_surname, item.link + ' '))
+        return black_users
 
 
 def check_user(user_id: int) -> bool:

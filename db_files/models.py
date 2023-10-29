@@ -53,7 +53,9 @@ class BlackList(Base):
     fnd_user_id: so.Mapped[int] = so.mapped_column(sa.Integer, ForeignKey('found_user.fnd_user_id'), unique=True,
                                                    primary_key=True)
     user_id: so.Mapped[int] = so.mapped_column(sa.Integer, ForeignKey('user.user_id'))
-
+    user_name: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)
+    user_surname: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)
+    link: so.Mapped[str] = so.mapped_column(sa.Text, unique=True, nullable=False)
     black_list_user: so.Mapped["User"] = relationship(back_populates='user_black_list')
     black_list_found_user: so.Mapped["FoundUser"] = relationship(back_populates='found_user_black_list')
 

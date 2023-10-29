@@ -94,6 +94,17 @@ def check_bdate(user_data, user_id):
     write_msg(user_data['id'], 'Ошибка', None)
     return False
 
+def get_city(user_data: dict):
+    resp = vk2.method('database.getCities', {
+        'country_id': 1,
+        'q': f'{user_data.get("city")}',
+        'need_all': 0,
+        'count': 1000,
+        'v': 5.154})
+    if resp:
+        if resp.get('items'):
+            user_data['city'] = {'id': resp.get('items')[0]['id'], 'title': user_data.get("city")}
+    return user_data
 
 def check_city(user_data, user_id):
     """
@@ -244,7 +255,8 @@ def combine_users_data(user_data, bd_founders=None):
         users_data = get_users_list(user_search(user_data), user_data['id'])
         if users_data:
             return users_data
-        write_msg(user_data['id'], 'Ошибка', None)
+        else:
+            write_msg(user_data['id'], 'Ошибка', None)
 
 
 def get_random_user(users_data, user_id):
@@ -273,8 +285,9 @@ def get_photo(vk_id):
     if resp:
         if resp.get('items'):
             return resp.get('items')
-        write_msg(vk_id, 'Ошибка', None)
-        return False
+        else:
+#            write_msg(vk_id, 'Ошибка', None)
+            return False
 
 
 def sort_by_likes(photos: list) -> list:
@@ -294,7 +307,6 @@ def get_photos_list(sort_list):
     возвращаем первые 3 фотографии с максимальным количеством лайков
     """
     photos_list = []
-    count = 0
     for photos in sort_list:
         photos_list.append('photo' + str(photos.get('owner_id')) + '_' + str(photos.get('id')))
     return photos_list
