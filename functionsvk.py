@@ -94,6 +94,7 @@ def check_bdate(user_data, user_id):
     write_msg(user_data['id'], 'Ошибка', None)
     return False
 
+
 def get_city(user_data: dict):
     resp = vk2.method('database.getCities', {
         'country_id': 1,
@@ -106,6 +107,7 @@ def get_city(user_data: dict):
             user_data['city'] = {'id': resp.get('items')[0]['id'], 'title': user_data.get("city")}
     return user_data
 
+
 def check_city(user_data, user_id):
     """
     Checks the user's city if there is no city
@@ -115,7 +117,7 @@ def check_city(user_data, user_id):
     """
     if user_data:
         for item_dict in [user_data]:
-            if item_dict['city'] is None:
+            if item_dict.get('city') is None:
                 write_msg(user_id, f'Введите город:', None)
                 for event in longpoll.listen():
                     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
@@ -127,7 +129,7 @@ def check_city(user_data, user_id):
                             'v': 5.154})
                         if resp:
                             if resp.get('items'):
-                                user_data['city'] = resp.get('items')[0]['id']
+                                user_data['city'] = {'id': resp.get('items')[0]['id'], 'title': event.text}
                                 return user_data
                             else:
                                 write_msg(user_id, 'Ошибка ввода города', None)

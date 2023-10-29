@@ -57,7 +57,7 @@ def new_user(user_id: str) -> dict:
     """
     Функция для сбора информации о новом пользователе и записи её в БД
     """
-    user_data = check_missing_info(check_city(check_bdate(get_user_data(user_id), user_id), user_id))
+    user_data = check_missing_info(check_city(check_bdate((get_user_data(user_id)), user_id), user_id))
     fill_user_table(user_data)
     return user_data
 
