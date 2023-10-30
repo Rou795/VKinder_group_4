@@ -1,6 +1,9 @@
+import os
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
-import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # DB settings
 DB_NAME: str = os.getenv('NAME_DB')
