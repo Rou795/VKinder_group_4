@@ -298,7 +298,7 @@ def get_photos_list(sort_list):
     """
     photos_list = []
     for photos in sort_list:
-        photos_list.append('photo' + str(photos.get('owner_id')) + '_' + str(photos.get('id')))
+        photos_list.append('photo' + str(photos.get('owner_id')) + '_' + str(photos.get('id'))+'_'+str(photos.get('likes')))
     return photos_list
 
 
